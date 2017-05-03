@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Linq;
 using System.Text;
 using Terraria;
 using TerrariaApi.Server;
+using System.Management;
 
 namespace FixConsoleOutputForWin7
 {
@@ -23,19 +25,34 @@ namespace FixConsoleOutputForWin7
 		{
 			if (Environment.OSVersion.Platform != PlatformID.Win32NT)
 			{
+				WriteLine("Other OS detected; do not use this plugin.", ConsoleColor.DarkCyan);
 				return;
 			}
 
-			if (Environment.OSVersion.Version >= new Version(6, 0) && VersionHelper.IsWindows10OrGreater())
+			var name = new ManagementObjectSearcher("SELECT Caption FROM Win32_OperatingSystem")
+							.Get()
+							.Cast<ManagementObject>()
+							.Select(x => x.GetPropertyValue("Caption")).FirstOrDefault()?.ToString() ?? "Unknown";
+
+			string versionString;
+			if (!name.StartsWith("Microsoft Windows") || string.IsNullOrWhiteSpace(versionString = name.Split(' ').FirstOrDefault(x => x.All(char.IsDigit))))
 			{
-				WriteLine("检测到系统版本为Windows 10；不需要运行插件。", ConsoleColor.Cyan);
+				WriteLine("Couldn't detect version; the version string is: " + name, ConsoleColor.Red);
+				return;
+			}
+
+			var windowsServer = name.Contains("Server");
+			var version = int.Parse(versionString);
+			if (version < 2008 && windowsServer || (version < 7 || version == 10) && !windowsServer)
+			{
+				WriteLine("Terraria Server on your Windows version doesn't need be fixed.", ConsoleColor.DarkCyan);
 				return;
 			}
 
 			try
 			{
-				Console.OutputEncoding = Encoding.GetEncoding("GBK");
-				WriteLine("控制台中文显示修复完毕！", ConsoleColor.Cyan);
+				Console.OutputEncoding = Encoding.Default;
+				WriteLine("Fixed console output successfully! OSVersion: " + name, ConsoleColor.Cyan);
 			}
 			catch
 			{
