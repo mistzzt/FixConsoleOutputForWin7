@@ -32,7 +32,9 @@ namespace FixConsoleOutputForWin7
 			var name = new ManagementObjectSearcher("SELECT Caption FROM Win32_OperatingSystem")
 							.Get()
 							.Cast<ManagementObject>()
-							.Select(x => x.GetPropertyValue("Caption")).FirstOrDefault()?.ToString() ?? "Unknown";
+							.Select(x => x.GetPropertyValue("Caption"))
+							.FirstOrDefault()?
+							.ToString() ?? "Unknown";
 
 			string versionString;
 			if (!name.StartsWith("Microsoft Windows") || string.IsNullOrWhiteSpace(versionString = name.Split(' ').FirstOrDefault(x => x.All(char.IsDigit))))
